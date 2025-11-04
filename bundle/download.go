@@ -5,14 +5,16 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path"
 )
 
 const windowsToolkitUrl = "https://github.com/microsoft/MSIX-Toolkit/archive/refs/tags/v2.0.zip"
 
 // Downloads the windows toolkit.
-func downloadToolkit() error {
+func downloadToolkit(basedir string) error {
+	p := path.Join(basedir, "windows-toolkit.zip")
 	fmt.Printf("Downloading windows toolkit from %s\n", windowsToolkitUrl)
-	_, err := downloadFile(windowsToolkitUrl, "windows-toolkit.zip")
+	_, err := downloadFile(windowsToolkitUrl, p)
 	if err != nil {
 		return err
 	}
