@@ -1,0 +1,8 @@
+name: Youtube
+version: 1.2.1.0
+publisher: CN=Google
+architecture: x64
+identity-name: Google.Youtube
+publisher-name: Google
+icon: icons/icon.png
+full-trust: true

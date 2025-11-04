@@ -4,12 +4,15 @@ import (
 	"context"
 	"encoding/xml"
 	"fmt"
+	"github.com/spf13/viper"
 	"github.com/urfave/cli/v3"
 	"os"
 	"os/exec"
 )
 
 func main() {
+	viper.SetConfigName("msixpack")
+	viper.AddConfigPath(".")
 	cmd := &cli.Command{
 		Name:  "msixpack",
 		Usage: "CLI for packaging msix applications",
@@ -18,7 +21,11 @@ func main() {
 			createCmd(),
 		},
 	}
-	cmd.Run(context.Background(), os.Args)
+	err := cmd.Run(context.Background(), os.Args)
+	if err != nil {
+		fmt.Printf("Error %s\n", err)
+		os.Exit(1)
+	}
 }
 
 func createCmd() *cli.Command {
@@ -26,12 +33,18 @@ func createCmd() *cli.Command {
 		Name:  "create",
 		Usage: "Create a manifest file",
 		Action: func(ctx context.Context, command *cli.Command) error {
-			m := NewManifest()
-			m.Properties = Properties{
-				DisplayName:          "Youtube",
-				PublisherDisplayName: "Google",
-				Logo:                 "icons/icon.png",
+			err := viper.ReadInConfig()
+			if err != nil {
+				return err
 			}
+
+			m := NewManifest()
+
+			err = LoadConfig(m)
+			if err != nil {
+				return err
+			}
+
 			output, err := xml.MarshalIndent(m, "", "\t")
 			if err != nil {
 				fmt.Printf("Error: %s", err)
