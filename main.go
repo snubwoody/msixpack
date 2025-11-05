@@ -18,6 +18,7 @@ func main() {
 		Commands: []*cli.Command{
 			cmd.Create(),
 			cmd.Pack(),
+			cmd.Bundle(),
 		},
 	}
 	err := command.Run(context.Background(), os.Args)

@@ -1,0 +1,8 @@
+name: Hello world
+version: 0.1.0.0
+publisher: CN=Test
+architecture: x64
+executable: hello.exe
+identity-name: Test.Hello
+publisher-name: Tester
+full-trust: true
