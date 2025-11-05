@@ -132,6 +132,7 @@ func loadCapabilties(m *Manifest) {
 
 func ValidateToolkit() error {
 	// TODO: check executions
+	// TODO: check if file already exists
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return err
@@ -174,7 +175,6 @@ func CopyDir(src string, dest string) error {
 	for _, file := range files {
 		srcPath := path.Join(src, file.Name())
 		destPath := path.Join(dest, file.Name())
-		fmt.Printf("%s\n", file.Name())
 		srcFile, err := os.Open(srcPath)
 		if err != nil {
 			return err
