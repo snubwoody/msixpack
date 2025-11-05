@@ -54,7 +54,7 @@ func TestParseConfig(t *testing.T) {
 
 func TestDefaultPackageValues(t *testing.T) {
 	m := NewManifest()
-	assert.Equal(t, m.IgnorableNamespace, "uap rescap")
+	assert.Equal(t, m.IgnorableNamespaces, "uap rescap")
 	assert.Equal(t, m.ResCapNamespace, "http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities")
 	assert.Equal(t, m.UapNamespace, "http://schemas.microsoft.com/appx/manifest/uap/windows10")
 	assert.Equal(t, m.Namespace, "http://schemas.microsoft.com/appx/manifest/foundation/windows10")
