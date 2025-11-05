@@ -1,9 +1,11 @@
 package bundle
 
 import (
+	"archive/zip"
 	"encoding/xml"
 	"fmt"
 	"github.com/spf13/viper"
+	"io"
 	"os"
 	"os/exec"
 	"path"
@@ -129,6 +131,7 @@ func loadCapabilties(m *Manifest) {
 }
 
 func ValidateToolkit() error {
+	// TODO: check executions
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return err
@@ -139,12 +142,91 @@ func ValidateToolkit() error {
 	if err != nil {
 		return err
 	}
-	err = downloadToolkit(dest)
+	p, err := downloadToolkit(dest)
 	if err != nil {
 		return err
 	}
 
+	err = UnzipFile(p, dest)
+	if err != nil {
+		return err
+	}
+	// TODO: get the name of the destination folder
+	err = CopyDir(path.Join(dest, "MSIX-Toolkit-2.0/WindowsSDK/11/10.0.22000.0/x64"), path.Join(dest, "windows-toolkit"))
+	if err != nil {
+		return err
+	}
 	return nil
+}
+
+// CopyDir copies all the files in src into the directory dest.
+func CopyDir(src string, dest string) error {
+	files, err := os.ReadDir(src)
+	if err != nil {
+		return err
+	}
+
+	err = os.MkdirAll(dest, 0755)
+	if err != nil {
+		return err
+	}
+
+	for _, file := range files {
+		srcPath := path.Join(src, file.Name())
+		destPath := path.Join(dest, file.Name())
+		fmt.Printf("%s\n", file.Name())
+		srcFile, err := os.Open(srcPath)
+		if err != nil {
+			return err
+		}
+		defer srcFile.Close()
+		destFile, err := os.Create(destPath)
+		if err != nil {
+			return err
+		}
+		defer destFile.Close()
+		io.Copy(destFile, srcFile)
+	}
+	return nil
+}
+
+func UnzipFile(src string, dest string) error {
+	r, err := zip.OpenReader(src)
+	if err != nil {
+		return err
+	}
+	defer r.Close()
+	for _, f := range r.File {
+		rc, err := f.Open()
+		if err != nil {
+			return err
+		}
+		defer rc.Close()
+
+		out := path.Join(dest, f.Name)
+		if f.FileInfo().IsDir() {
+			err := os.MkdirAll(out, 0777)
+			if err != nil {
+				return err
+			}
+			continue
+		}
+
+		//fmt.Printf("Unzipping %s\n", out)
+		newFile, err := os.Create(out)
+		if err != nil {
+			return err
+		}
+		_, err = io.Copy(newFile, rc)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func CopyFile() {
+
 }
 
 // BundleApp bundles an folder with an appxmanifest.xml file into
@@ -156,7 +238,6 @@ func BundleApp(p string, output string) error {
 		return err
 	}
 	home, err := os.UserHomeDir()
-
 	if err != nil {
 		return err
 	}
