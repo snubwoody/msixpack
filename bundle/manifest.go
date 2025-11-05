@@ -6,16 +6,16 @@ import (
 
 // TODO: add visual elements
 type Manifest struct {
-	XMLName            xml.Name `xml:"Package"`
-	Namespace          string   `xml:"xmlns,attr"`
-	UapNamespace       string   `xml:"xmlns:uap,attr"`
-	ResCapNamespace    string   `xml:"xmlns:rescap,attr"`
-	IgnorableNamespace string   `xml:"IgnorableNamespace,attr"`
-	Properties         Properties
-	Identity           Identity
-	Dependencies       Dependencies
-	Applications       []Application `xml:"Applications>Application"`
-	Capabilities       []Capability  `xml:"Capabilities>rescap:Capability"`
+	XMLName             xml.Name `xml:"Package"`
+	Namespace           string   `xml:"xmlns,attr"`
+	UapNamespace        string   `xml:"xmlns:uap,attr"`
+	ResCapNamespace     string   `xml:"xmlns:rescap,attr"`
+	IgnorableNamespaces string   `xml:"IgnorableNamespaces,attr"`
+	Properties          Properties
+	Identity            Identity
+	Dependencies        Dependencies
+	Applications        []Application `xml:"Applications>Application"`
+	Capabilities        []Capability  `xml:"Capabilities>rescap:Capability"`
 }
 
 type Capability struct {
@@ -55,10 +55,10 @@ type TargetDeviceFamily struct {
 func NewManifest() *Manifest {
 	// The namespace values should never change.
 	m := &Manifest{
-		Namespace:          "http://schemas.microsoft.com/appx/manifest/foundation/windows10",
-		UapNamespace:       "http://schemas.microsoft.com/appx/manifest/uap/windows10",
-		ResCapNamespace:    "http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities",
-		IgnorableNamespace: "uap rescap",
+		Namespace:           "http://schemas.microsoft.com/appx/manifest/foundation/windows10",
+		UapNamespace:        "http://schemas.microsoft.com/appx/manifest/uap/windows10",
+		ResCapNamespace:     "http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities",
+		IgnorableNamespaces: "uap rescap",
 		Dependencies: Dependencies{
 			TargetDeviceFamily: TargetDeviceFamily{
 				Name:             "Windows.Desktop",

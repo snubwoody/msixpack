@@ -13,9 +13,9 @@ type Config struct {
 type ConfigPackage struct {
 	Version       string
 	Name          string
-	DisplayName   string
+	DisplayName   string `toml:"display-name"`
 	Publisher     string
-	PublisherName string
+	PublisherName string `toml:"publisher-name"`
 	Logo          string
 	Resources     string
 }
