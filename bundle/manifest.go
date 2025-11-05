@@ -23,9 +23,18 @@ type Capability struct {
 }
 
 type Application struct {
-	Id         string `xml:"Id,attr"`
-	Executable string `xml:"Executable,attr"`
-	EntryPoint string `xml:"EntryPoint,attr"`
+	Id             string                    `xml:"Id,attr"`
+	Executable     string                    `xml:"Executable,attr"`
+	EntryPoint     string                    `xml:"EntryPoint,attr"`
+	VisualElements ApplicationVisualElements `xml:"uap:VisualElements"`
+}
+
+type ApplicationVisualElements struct {
+	DisplayName     string `xml:"DisplayName,attr"`
+	LargeLogo       string `xml:"Square150x150Logo,attr"`
+	SmallLogo       string `xml:"Square44x44Logo,attr"`
+	BackgroundColor string `xml:"BackgroundColor,attr"`
+	Description     string `xml:"Description,attr"`
 }
 
 type Properties struct {
@@ -97,11 +106,19 @@ func (m *Manifest) loadApplication(cfg *Config) {
 	if cfg.Application.Id == "" {
 		id = cfg.Application.Name
 	}
-	m.Applications = []Application{
-		{
-			Id:         id,
-			Executable: cfg.Application.Executable,
-			EntryPoint: "Windows.FullTrustApplication",
+	app := Application{
+		Id:         id,
+		Executable: cfg.Application.Executable,
+		EntryPoint: "Windows.FullTrustApplication",
+		VisualElements: ApplicationVisualElements{
+			SmallLogo:       cfg.Package.Logo,
+			LargeLogo:       cfg.Package.Logo,
+			DisplayName:     cfg.Application.Name,
+			Description:     cfg.Application.Description,
+			BackgroundColor: "transparent",
 		},
+	}
+	m.Applications = []Application{
+		app,
 	}
 }
