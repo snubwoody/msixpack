@@ -143,12 +143,12 @@ func ValidateToolkit() error {
 	if err != nil {
 		return err
 	}
-	p, err := downloadToolkit(dest)
+	zipFile, err := downloadToolkit(dest)
 	if err != nil {
 		return err
 	}
 
-	err = UnzipFile(p, dest)
+	err = UnzipFile(zipFile, dest)
 	if err != nil {
 		return err
 	}
@@ -157,7 +157,12 @@ func ValidateToolkit() error {
 	if err != nil {
 		return err
 	}
-	return nil
+	// Delete the zip file and unused contents
+	err = os.RemoveAll(zipFile)
+	if err != nil {
+		return err
+	}
+	return os.RemoveAll(path.Join(dest, "MSIX-Toolkit-2.0"))
 }
 
 // CopyDir copies all the files in src into the directory dest.
@@ -217,6 +222,7 @@ func UnzipFile(src string, dest string) error {
 		if err != nil {
 			return err
 		}
+		defer newFile.Close()
 		_, err = io.Copy(newFile, rc)
 		if err != nil {
 			return err
