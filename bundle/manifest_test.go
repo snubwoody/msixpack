@@ -2,13 +2,11 @@ package bundle
 
 import (
 	"fmt"
-	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
 func TestLoadIdentity(t *testing.T) {
-	viper.Set("name")
 	m := NewManifest()
 	loadIdentity(m)
 	fmt.Printf("Manifest: %v\n", m)

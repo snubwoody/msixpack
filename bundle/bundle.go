@@ -13,6 +13,9 @@ func ValidateToolkit() error {
 	// TODO: check executions
 	// TODO: check if file already exists
 	home, err := os.UserHomeDir()
+	if err != nil {
+		return err
+	}
 	_, err = os.Stat(path.Join(home, ".msixpack", "windows-toolkit", "makeappx.exe"))
 	if !os.IsNotExist(err) {
 		return nil
@@ -66,13 +69,19 @@ func CopyDir(src string, dest string) error {
 		if err != nil {
 			return err
 		}
-		defer srcFile.Close()
 		destFile, err := os.Create(destPath)
 		if err != nil {
 			return err
 		}
-		defer destFile.Close()
-		io.Copy(destFile, srcFile)
+		if _, err = io.Copy(destFile, srcFile); err != nil {
+			return err
+		}
+		if err = srcFile.Close(); err != nil {
+			return err
+		}
+		if err = destFile.Close(); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -82,13 +91,11 @@ func UnzipFile(src string, dest string) error {
 	if err != nil {
 		return err
 	}
-	defer r.Close()
 	for _, f := range r.File {
 		rc, err := f.Open()
 		if err != nil {
 			return err
 		}
-		defer rc.Close()
 
 		out := path.Join(dest, f.Name)
 		if f.FileInfo().IsDir() {
@@ -104,13 +111,18 @@ func UnzipFile(src string, dest string) error {
 		if err != nil {
 			return err
 		}
-		defer newFile.Close()
 		_, err = io.Copy(newFile, rc)
 		if err != nil {
 			return err
 		}
+		if err := newFile.Close(); err != nil {
+			return err
+		}
+		if err := rc.Close(); err != nil {
+			return err
+		}
 	}
-	return nil
+	return r.Close()
 }
 
 // BundleApp bundles an folder with an appxmanifest.xml file into
