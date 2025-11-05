@@ -22,10 +22,11 @@ func Create() *cli.Command {
 
 			m := bundle.NewManifest()
 
-			err = bundle.LoadConfig(m)
-			if err != nil {
-				return err
-			}
+			// FIXME
+			//err = bundle.LoadConfig(m)
+			//if err != nil {
+			//	return err
+			//}
 
 			output, err := xml.MarshalIndent(m, "", "\t")
 			if err != nil {
