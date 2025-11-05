@@ -1,15 +1,55 @@
 package bundle
 
 import (
-	"fmt"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
-func TestLoadIdentity(t *testing.T) {
-	m := NewManifest()
-	loadIdentity(m)
-	fmt.Printf("Manifest: %v\n", m)
+func TestParseConfig(t *testing.T) {
+	t.Run("parse package", func(t *testing.T) {
+		m := NewManifest()
+		cfg := &Config{
+			Package: ConfigPackage{
+				Version:   "1.2.2.2",
+				Publisher: "CN=Test",
+			},
+		}
+		m.ParseConfig(cfg)
+		i := m.Identity
+		assert.Equal(t, i.Publisher, cfg.Package.Publisher)
+		assert.Equal(t, i.Version, cfg.Package.Version)
+	})
+
+	t.Run("inherit id from name", func(t *testing.T) {
+		m := NewManifest()
+		cfg := &Config{
+			Application: ConfigApplication{
+				Name:        "Name",
+				Description: "Description",
+				Executable:  "file.exe",
+			},
+		}
+		m.ParseConfig(cfg)
+		a := m.Applications[0]
+		assert.Equal(t, a.Id, cfg.Application.Name)
+	})
+
+	t.Run("parse application", func(t *testing.T) {
+		m := NewManifest()
+		cfg := &Config{
+			Application: ConfigApplication{
+				Id:          "Folio",
+				Name:        "Name",
+				Description: "Description",
+				Executable:  "file.exe",
+			},
+		}
+		m.ParseConfig(cfg)
+		a := m.Applications[0]
+		assert.Equal(t, a.Executable, cfg.Application.Executable)
+		assert.Equal(t, a.Id, cfg.Application.Id)
+		assert.Equal(t, a.EntryPoint, "Windows.FullTrustApplication")
+	})
 }
 
 func TestDefaultPackageValues(t *testing.T) {

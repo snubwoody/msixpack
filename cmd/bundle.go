@@ -25,13 +25,14 @@ func Bundle() *cli.Command {
 	return cmd
 }
 
-func bundleAction(_ context.Context, command *cli.Command) error {
+func bundleAction(_ context.Context, _ *cli.Command) error {
 	fmt.Printf("Bundling app\n")
 	m := bundle.NewManifest()
-	err := bundle.LoadConfig(m)
-	if err != nil {
-		return err
-	}
+	// FIXME
+	//err := bundle.LoadConfig(m)
+	//if err != nil {
+	//	return err
+	//}
 	fmt.Printf("%v\n", m)
 	return nil
 }
