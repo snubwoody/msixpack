@@ -20,14 +20,12 @@ func Create() *cli.Command {
 				return err
 			}
 
+			cfg, err := bundle.ReadConfig("msixpack.toml")
+			if err != nil {
+				return err
+			}
 			m := bundle.NewManifest()
-
-			// FIXME
-			//err = bundle.LoadConfig(m)
-			//if err != nil {
-			//	return err
-			//}
-
+			m.ParseConfig(&cfg)
 			output, err := xml.MarshalIndent(m, "", "\t")
 			if err != nil {
 				fmt.Printf("Error: %s", err)
