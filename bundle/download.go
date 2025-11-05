@@ -10,10 +10,6 @@ import (
 
 const windowsToolkitUrl = "https://github.com/microsoft/MSIX-Toolkit/archive/refs/tags/v2.0.zip"
 
-func installToolkit(basedir string) {
-
-}
-
 // Downloads the windows toolkit.
 func downloadToolkit(basedir string) (string, error) {
 	p := path.Join(basedir, "windows-toolkit.zip")
@@ -31,14 +27,15 @@ func downloadFile(url string, dest string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	defer resp.Body.Close()
-
 	f, err := os.Create(dest)
 	if err != nil {
 		return "", err
 	}
 	_, err = io.Copy(f, resp.Body)
 	if err != nil {
+		return "", err
+	}
+	if err = resp.Body.Close(); err != nil {
 		return "", err
 	}
 	return dest, nil
