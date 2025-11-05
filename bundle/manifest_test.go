@@ -5,58 +5,50 @@ import (
 	"testing"
 )
 
-func TestLoadIdentity(t *testing.T) {
-	t.Run("load config values", func(t *testing.T) {
+func TestParseConfig(t *testing.T) {
+	t.Run("parse package", func(t *testing.T) {
 		m := NewManifest()
-		cfg := &ManifestConfig{
-			Version:   "1.2.2.2",
-			Publisher: "CN=Test",
+		cfg := &Config{
+			Package: ConfigPackage{
+				Version:   "1.2.2.2",
+				Publisher: "CN=Test",
+			},
 		}
-		loadApplication(m, cfg)
+		m.ParseConfig(cfg)
 		i := m.Identity
-		assert.Equal(t, i.Publisher, cfg.Publisher)
-		assert.Equal(t, i.Version, cfg.Version)
+		assert.Equal(t, i.Publisher, cfg.Package.Publisher)
+		assert.Equal(t, i.Version, cfg.Package.Version)
 	})
 
 	t.Run("inherit id from name", func(t *testing.T) {
 		m := NewManifest()
-		cfg := &ManifestConfig{
-			Name:        "Name",
-			Description: "Description",
-			Executable:  "file.exe",
+		cfg := &Config{
+			Application: ConfigApplication{
+				Name:        "Name",
+				Description: "Description",
+				Executable:  "file.exe",
+			},
 		}
-		loadApplication(m, cfg)
+		m.ParseConfig(cfg)
 		a := m.Applications[0]
-		assert.Equal(t, a.Id, cfg.Name)
+		assert.Equal(t, a.Id, cfg.Application.Name)
 	})
-}
 
-func TestLoadApplication(t *testing.T) {
-	t.Run("load config values", func(t *testing.T) {
+	t.Run("parse application", func(t *testing.T) {
 		m := NewManifest()
-		cfg := &ManifestConfig{
-			Id:          "Folio",
-			Name:        "Name",
-			Description: "Description",
-			Executable:  "file.exe",
+		cfg := &Config{
+			Application: ConfigApplication{
+				Id:          "Folio",
+				Name:        "Name",
+				Description: "Description",
+				Executable:  "file.exe",
+			},
 		}
-		loadApplication(m, cfg)
+		m.ParseConfig(cfg)
 		a := m.Applications[0]
-		assert.Equal(t, a.Executable, cfg.Executable)
-		assert.Equal(t, a.Id, cfg.Id)
+		assert.Equal(t, a.Executable, cfg.Application.Executable)
+		assert.Equal(t, a.Id, cfg.Application.Id)
 		assert.Equal(t, a.EntryPoint, "Windows.FullTrustApplication")
-	})
-
-	t.Run("inherit id from name", func(t *testing.T) {
-		m := NewManifest()
-		cfg := &ManifestConfig{
-			Name:        "Name",
-			Description: "Description",
-			Executable:  "file.exe",
-		}
-		loadApplication(m, cfg)
-		a := m.Applications[0]
-		assert.Equal(t, a.Id, cfg.Name)
 	})
 }
 

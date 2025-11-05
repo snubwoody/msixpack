@@ -1,0 +1,12 @@
+[package]
+version = "0.1.0.0"
+name = "Hello.World"
+display-name = ""
+publisher = "CN="
+publisher-name = ""
+
+[application]
+id = "Hello"
+executable = "hello.exe"
+name = "Folio"
+description = "A simple greeting"

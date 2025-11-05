@@ -1,1 +1,14 @@
+[package]
 version = "1.0.0.0"
+name = "Folio.App"
+display-name = ""
+publisher = "CN="
+publisher-name = ""
+logo = "icons/icon.png"
+resources = []
+
+[application]
+id = "Folio"
+executable = "folio.exe"
+name = "Folio"
+description = "A free, privacy focused budgeting app."
