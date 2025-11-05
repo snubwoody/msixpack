@@ -134,8 +134,9 @@ func ValidateToolkit() error {
 	// TODO: check executions
 	// TODO: check if file already exists
 	home, err := os.UserHomeDir()
-	if err != nil {
-		return err
+	_, err = os.Stat(path.Join(home, ".msixpack", "windows-toolkit", "makeappx.exe"))
+	if !os.IsNotExist(err) {
+		return nil
 	}
 
 	dest := path.Join(home, ".msixpack")
@@ -153,10 +154,12 @@ func ValidateToolkit() error {
 		return err
 	}
 	// TODO: get the name of the destination folder
-	err = CopyDir(path.Join(dest, "MSIX-Toolkit-2.0/WindowsSDK/11/10.0.22000.0/x64"), path.Join(dest, "windows-toolkit"))
+	toolkitPath := path.Join(dest, "windows-toolkit")
+	err = CopyDir(path.Join(dest, "MSIX-Toolkit-2.0/WindowsSDK/11/10.0.22000.0/x64"), toolkitPath)
 	if err != nil {
 		return err
 	}
+	fmt.Printf("Installed windows toolkit at %s\n", toolkitPath)
 	// Delete the zip file and unused contents
 	err = os.RemoveAll(zipFile)
 	if err != nil {
