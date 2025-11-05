@@ -5,6 +5,34 @@ import (
 	"github.com/spf13/viper"
 )
 
+type ManifestConfig struct {
+	// The application id, this value only needs to be unique
+	// inside the package but not globally, this value
+	// must not be changed after the app has been published to the
+	// microsoft store.
+	//
+	// If this value is empty then it will be inherited from
+	// the name/
+	Id string
+	// The name of the application
+	Name string
+	// The description of the app.
+	Description string
+	// The path to the executable.
+	Executable string
+	// Describes the publisher information.
+	// The Publisher attribute must match the publisher subject information of
+	// the certificate used to sign a package.
+	Publisher string
+	// The version of the package, must be in quad notation,
+	// MAJOR.MINOR.PATCH.BUILD
+	//
+	// The major version cannot be 0.
+	Version string
+}
+
+// TODO: maybe viper isnt needed
+// TODO: add visual elements
 type Manifest struct {
 	XMLName            xml.Name `xml:"Package"`
 	Namespace          string   `xml:"xmlns,attr"`
@@ -74,23 +102,22 @@ func LoadConfig(m *Manifest) error {
 		PublisherDisplayName: publisherName,
 		Logo:                 logo,
 	}
-	loadIdentity(m)
+	c := &ManifestConfig{}
+	loadIdentity(m, c)
 	loadDependencies(m)
-	loadApplication(m)
+	loadApplication(m, c)
 	loadCapabilties(m)
 	return nil
 }
 
-func loadIdentity(m *Manifest) {
+func loadIdentity(m *Manifest, cfg *ManifestConfig) {
 	name := viper.GetString("identity-name")
-	version := viper.GetString("version")
-	publisher := viper.GetString("publisher")
-	arch := viper.GetString("architecture")
+
 	m.Identity = Identity{
 		Name:                  name,
-		Version:               version,
-		Publisher:             publisher,
-		ProcessorArchitecture: arch,
+		Version:               cfg.Version,
+		Publisher:             cfg.Publisher,
+		ProcessorArchitecture: "x64",
 	}
 }
 
@@ -106,11 +133,15 @@ func loadDependencies(m *Manifest) {
 	}
 }
 
-func loadApplication(m *Manifest) {
+func loadApplication(m *Manifest, cfg *ManifestConfig) {
+	id := cfg.Id
+	if cfg.Id == "" {
+		id = cfg.Name
+	}
 	m.Applications = []Application{
 		{
-			Id:         "Youtube",
-			Executable: "youtube.exe",
+			Id:         id,
+			Executable: cfg.Executable,
 			EntryPoint: "Windows.FullTrustApplication",
 		},
 	}
