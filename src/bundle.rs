@@ -8,11 +8,11 @@ pub fn bundle_package(dir: impl AsRef<Path>,dest: impl AsRef<Path>) -> anyhow::R
     // TODO: set env var
     let package = dir.as_ref().to_str().unwrap();
     let output = dest.as_ref().to_str().unwrap();
+    // TODO: test existing packages
     let output = Command::new("./.msixpack/windows-toolkit/makeappx.exe")
-        .args(&["pack","/d",package,"/p",output])
+        .args(&["pack","/d",package,"/p",output,"/o"])
         .output()?;
 
-    dbg!(String::from_utf8_lossy(&output.stderr));
     let stdout = String::from_utf8_lossy(&output.stdout);
 
     // TODO: improve error message
@@ -26,7 +26,6 @@ pub fn bundle_package(dir: impl AsRef<Path>,dest: impl AsRef<Path>) -> anyhow::R
 mod test{
     use tempfile::tempdir;
     use crate::{Application, Config, Package};
-    use crate::manifest::AppxManifest;
     use super::*;
 
     #[test]

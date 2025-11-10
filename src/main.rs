@@ -11,6 +11,8 @@ use std::fs;
 use std::fs::File;
 use std::io::Cursor;
 use std::path::{Path, PathBuf};
+use tempfile::tempdir;
+use crate::bundle::bundle_package;
 
 fn main() -> anyhow::Result<()> {
     // TODO:
@@ -22,7 +24,13 @@ fn main() -> anyhow::Result<()> {
     let mut config: Config =
         toml::from_slice(&bytes).with_context(|| "Failed to parse config".to_string())?;
     config.directory = config_path.parent().unwrap().to_path_buf();
-    create_package(&config, "out-temp")?;
+    let temp = tempdir()?;
+    let temp_dir = temp.path();
+    let dest = temp_dir.join(".msixpack");
+    fs::create_dir_all(&dest)?;
+    create_package(&config, &dest)?;
+    bundle_package(dest,"out.msix")?;
+
     Ok(())
 }
 
@@ -98,17 +106,13 @@ struct Application {
     executable: PathBuf,
 }
 
+/// Creates an msix package in the `dest` directory
 fn create_package(config: &Config, dest: impl AsRef<Path>) -> anyhow::Result<()> {
     copy_executable(config, &dest)?;
     copy_resources(config, &dest)?;
-
     let manifest = config.create_manifest();
     let xml = quick_xml::se::to_string(&manifest)?;
-    // let mut buffer = Vec::new();
-    // let mut writer = Writer::new_with_indent(Cursor::new(&mut buffer), b' ',4);
-    // let mut serializer = Serializer::new(&mut writer);
-    // manifest.serialize(&mut serializer)?;
-    fs::write(dest.as_ref().join("appxmanifest.xml"), xml)?;
+    fs::write(&dest.as_ref().join("appxmanifest.xml"), &xml)?;
     Ok(())
 }
 
