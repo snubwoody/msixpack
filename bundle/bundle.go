@@ -18,6 +18,7 @@ func ValidateToolkit() error {
 	}
 	_, err = os.Stat(path.Join(home, ".msixpack", "windows-toolkit", "makeappx.exe"))
 	if !os.IsNotExist(err) {
+		// FIXME: check this
 		return nil
 	}
 
@@ -123,6 +124,14 @@ func UnzipFile(src string, dest string) error {
 		}
 	}
 	return r.Close()
+}
+
+// CreatePackage creates a new msix package.
+func CreatePackage(cfg Config) error {
+	// TODO: read config
+	// TODO: copy over resources and executable
+	// TODO: make msix file and pass it
+	return nil
 }
 
 // BundleApp bundles an folder with an appxmanifest.xml file into
