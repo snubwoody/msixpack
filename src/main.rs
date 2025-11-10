@@ -35,11 +35,29 @@ pub struct Config{
 impl Config {
     pub fn create_manifest(&self) -> AppxManifest{
         let mut manifest = AppxManifest::new();
+
         manifest.identity.version = self.package.version.clone();
         manifest.identity.name = self.package.name.clone();
         manifest.identity.processor_architecture = "x64".to_owned();
         manifest.identity.publisher = self.package.publisher.to_owned();
+
+        manifest.properties.logo = self.package.logo.to_owned();
+        manifest.properties.display_name = self.package.display_name.to_owned();
+        manifest.properties.publisher_display_name = self.package.publisher_name.to_owned();
+
+        manifest.applications.applications.push(self.create_application());
         manifest
+    }
+
+    fn create_application(&self) -> manifest::Application{
+        let app = manifest::Application{
+            id: self.application.id.clone(),
+            executable: self.application.executable.to_str().unwrap().to_owned(),
+            entry_point: String::from("Windows.FullTrustApplication"),
+            ..Default::default()
+        };
+
+        app
     }
 }
 
@@ -47,6 +65,7 @@ impl Config {
 struct Package{
     /// The name of the package.
     name: String,
+    display_name: String,
     publisher_name: String,
     publisher: String,
     version: String,
@@ -57,6 +76,7 @@ struct Package{
 
 #[derive(Debug,Clone,PartialEq,Serialize,Deserialize,Default)]
 struct Application{
+    id: String,
     executable: PathBuf,
 }
 
@@ -115,6 +135,22 @@ mod test{
         assert_eq!(manifest.identity.processor_architecture, "x64");
         assert_eq!(manifest.identity.publisher, "CN=Company");
         assert_eq!(manifest.identity.name, "Company.App");
+    }
+
+    #[test]
+    fn create_application(){
+        let application = Application{
+            id: String::from("ID"),
+            executable: PathBuf::from("/bin/sh"),
+            ..Default::default()
+        };
+        let config = Config{application,..Default::default()};
+        let manifest = config.create_manifest();
+
+        let app = &manifest.applications.applications[0];
+        assert_eq!(app.id, "ID");
+        assert_eq!(app.executable,"/bin/sh");
+        assert_eq!(app.entry_point,"Windows.FullTrustApplication");
     }
 
     #[test]

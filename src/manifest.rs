@@ -11,7 +11,14 @@ pub struct AppxManifest{
     pub xmlns_rescap: String,
     #[serde(rename = "@IgnorableNamespaces")]
     pub ignorable_namespaces: String,
-    pub identity: Identity
+    pub identity: Identity,
+    pub properties: Properties,
+    pub dependencies: Dependencies,
+    pub resources: Resources,
+    /// Although each package can contain one or more apps,
+    /// packages that contain multiple apps won't pass the Store
+    /// certification process.
+    pub applications: Applications,
 }
 
 impl AppxManifest{
@@ -29,11 +36,94 @@ impl AppxManifest{
 
 #[derive(Serialize, Deserialize, Debug, Default)]
 pub struct Identity{
-    #[serde(rename = "@xmlns:rescap")]
+    #[serde(rename = "@Name")]
     pub name: String,
+    #[serde(rename = "@Version")]
     pub version: String,
+    #[serde(rename = "@Publisher")]
     pub publisher: String,
+    #[serde(rename = "@ProcessorArchitecture")]
     pub processor_architecture: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Default, Clone)]
+pub struct Applications{
+    pub applications: Vec<Application>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Default,Clone)]
+pub struct Application{
+    #[serde(rename="@Id")]
+    pub id: String,
+    #[serde(rename="@Executable")]
+    pub executable: String,
+    #[serde(rename="@EntryPoint")]
+    pub entry_point: String,
+    pub visual_elements: VisualElements
+}
+
+#[derive(Serialize, Deserialize, Debug, Default, Clone)]
+#[serde(rename="uap:VisualElements")]
+pub struct VisualElements{
+    #[serde(rename = "@DisplayName")]
+    pub display_name: String,
+    #[serde(rename = "@Description")]
+    pub description: String,
+    #[serde(rename = "@BackgroundColor")]
+    pub background_color: String,
+    #[serde(rename = "@Square150x150Logo")]
+    pub square_150_logo: String,
+    #[serde(rename = "@Square44x44Logo")]
+    pub square_44_logo: String
+}
+
+
+#[derive(Serialize, Deserialize, Debug, Default)]
+pub struct Resources{
+    pub resources: Vec<Resource>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Default)]
+pub struct Resource{
+    #[serde(rename = "@Name")]
+    name: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Default)]
+pub struct Properties{
+    pub display_name: String,
+    pub publisher_display_name: String,
+    pub logo: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Default,PartialEq,Clone,PartialOrd)]
+pub struct Dependencies{
+    pub target_device_family: TargetDeviceFamily
+}
+
+#[derive(Serialize, Deserialize, Debug,Clone,PartialOrd, PartialEq)]
+pub struct TargetDeviceFamily{
+    #[serde(rename = "@Name")]
+    name: String,
+    #[serde(rename = "@MinVersion")]
+    min_version: String,
+    #[serde(rename = "@MaxVersionTested")]
+    max_version: String,
+}
+
+impl Default for TargetDeviceFamily{
+    fn default() -> Self {
+        // (i think) this is the minimum version supported by msix.
+        let min_version = "10.0.17763.0";
+        // just an arbitrary version that is recent enough.
+        let max_version = "10.0.22621.0";
+
+        Self{
+            name: String::from("Windows.Desktop"),
+            min_version: String::from(min_version),
+            max_version: String::from(max_version),
+        }
+    }
 }
 
 #[cfg(test)]
