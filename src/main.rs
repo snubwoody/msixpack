@@ -1,4 +1,5 @@
 mod manifest;
+mod bundle;
 
 use crate::manifest::{AppxManifest, VisualElements};
 use anyhow::Context;
@@ -110,6 +111,8 @@ fn create_package(config: &Config, dest: impl AsRef<Path>) -> anyhow::Result<()>
     fs::write(dest.as_ref().join("appxmanifest.xml"), xml)?;
     Ok(())
 }
+
+
 
 fn copy_executable(config: &Config, dest: impl AsRef<Path>) -> anyhow::Result<()> {
     let dest = dest.as_ref();
