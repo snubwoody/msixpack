@@ -3,37 +3,47 @@ use std::fs::File;
 use std::path::{Path, PathBuf};
 use anyhow::Context;
 use glob::glob;
+use serde::{Deserialize, Serialize};
 
-fn main() {
+fn main() -> anyhow::Result<()> {
     // TODO:
     // Copy executable and resources
     // Create appxmanifest
     // Create msix package
     println!("Hello, world!");
+    let config_path = Path::new("testdata/hello/msixpack.toml");
+    let bytes = fs::read(config_path)?;
+    let mut config: Config = toml::from_slice(&bytes)?;
+    config.directory = config_path.parent().unwrap().to_path_buf();
+    dbg!(&config);
+    create_package(&config,"out-temp")?;
+    Ok(())
 }
 
-#[derive(Debug,Clone,PartialEq)]
+#[derive(Debug,Clone,PartialEq,Serialize,Deserialize,Default)]
 struct Config{
     /// The path of the configuration file.
+    #[serde(skip,default)]
     directory: PathBuf,
+    package: Package
+}
+
+#[derive(Debug,Clone,PartialEq,Serialize,Deserialize,Default)]
+struct Package{
     /// A series of glob paths.
     resources: Vec<String>
 }
 
-struct Application{
-
-}
-
-fn create_package(path: impl AsRef<Path>,out: impl AsRef<Path>) -> anyhow::Result<()> {
-    fs::copy(path.as_ref(), out)
-        .with_context(|| format!("Failed to copy file to {}", path.as_ref().display()))?;
+fn create_package(config: &Config,dest: impl AsRef<Path>) -> anyhow::Result<()> {
+    // FIXME: create dest directory
+    copy_resources(config, &dest)?;
     Ok(())
 }
 
 /// Copy all the resources defined in the [`Config`] to the destination directory.
 fn copy_resources(config: &Config,dest: impl AsRef<Path>) -> anyhow::Result<()> {
     let dir = &config.directory;
-    for pattern in &config.resources{
+    for pattern in &config.package.resources{
         let path = dir.join(pattern);
         for entry in glob(path.to_str().unwrap())?{
             let entry = entry?;
@@ -59,16 +69,6 @@ mod test{
     use super::*;
 
     #[test]
-    fn copy_executable() -> anyhow::Result<()> {
-        let dir = tempdir()?;
-        let exe_path = dir.path().join("main.exe");
-        File::create(&exe_path)?;
-        let out_path = dir.path().join("out.exe");
-        create_package(exe_path,&out_path)?;
-        Ok(())
-    }
-
-    #[test]
     fn copy_resources() -> anyhow::Result<()> {
         let dir = tempdir()?;
         let icons_dir = dir.path().join("icons");
@@ -79,7 +79,9 @@ mod test{
         File::create(&icon2)?;
         let config = Config{
             directory: dir.path().to_path_buf(),
-            resources: vec!["icons/*.png".to_string()]
+            package: Package{
+                resources: vec!["icons/*.png".to_string()]
+            },
         };
         let out = tempdir()?;
         super::copy_resources(&config,out.path())?;
