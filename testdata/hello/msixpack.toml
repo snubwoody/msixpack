@@ -1,9 +1,10 @@
 [package]
 version = "0.1.0.0"
 name = "Hello.World"
-display-name = ""
-publisher = "CN="
-publisher-name = ""
+display-name = "Hello"
+publisher = "CN=Testing"
+publisher-name = "Test"
+logo="icon.png"
 
 [application]
 id = "Hello"

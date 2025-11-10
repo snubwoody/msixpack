@@ -3,8 +3,6 @@ package cmd
 import (
 	"context"
 	"encoding/xml"
-	"fmt"
-	"github.com/spf13/viper"
 	"github.com/urfave/cli/v3"
 	"msixpack/bundle"
 	"os"
@@ -14,25 +12,26 @@ func Create() *cli.Command {
 	cmd := &cli.Command{
 		Name:  "create",
 		Usage: "Create a manifest file",
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:    "config",
+				Aliases: []string{"c"},
+				Usage:   "The path to the config file",
+				Value:   "msixpack.toml",
+			},
+		},
 		Action: func(ctx context.Context, command *cli.Command) error {
-			err := viper.ReadInConfig()
+			configPath := command.String("config")
+			cfg, err := bundle.ReadConfig(configPath)
 			if err != nil {
 				return err
 			}
-
 			m := bundle.NewManifest()
-
-			// FIXME
-			//err = bundle.LoadConfig(m)
-			//if err != nil {
-			//	return err
-			//}
-
+			m.ParseConfig(&cfg)
 			output, err := xml.MarshalIndent(m, "", "\t")
 			if err != nil {
-				fmt.Printf("Error: %s", err)
+				return err
 			}
-			fmt.Printf("%s", output)
 			err = os.WriteFile("appxmanifest.xml", output, 0666)
 			if err != nil {
 				return err

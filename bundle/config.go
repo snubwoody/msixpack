@@ -1,5 +1,10 @@
 package bundle
 
+import (
+	"github.com/pelletier/go-toml/v2"
+	"os"
+)
+
 type Config struct {
 	Package     ConfigPackage
 	Application ConfigApplication
@@ -8,9 +13,9 @@ type Config struct {
 type ConfigPackage struct {
 	Version       string
 	Name          string
-	DisplayName   string
+	DisplayName   string `toml:"display-name"`
 	Publisher     string
-	PublisherName string
+	PublisherName string `toml:"publisher-name"`
 	Logo          string
 	Resources     string
 }
@@ -20,4 +25,17 @@ type ConfigApplication struct {
 	Executable  string
 	Name        string
 	Description string
+}
+
+func ReadConfig(path string) (Config, error) {
+	var cfg Config
+	bytes, err := os.ReadFile(path)
+	if err != nil {
+		return Config{}, err
+	}
+	err = toml.Unmarshal(bytes, &cfg)
+	if err != nil {
+		return Config{}, err
+	}
+	return cfg, nil
 }

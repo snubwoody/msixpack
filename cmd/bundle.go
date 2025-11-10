@@ -2,9 +2,13 @@ package cmd
 
 import (
 	"context"
+	"encoding/xml"
 	"fmt"
 	"github.com/urfave/cli/v3"
 	"msixpack/bundle"
+	"os"
+	"path"
+	"path/filepath"
 )
 
 func Bundle() *cli.Command {
@@ -13,10 +17,10 @@ func Bundle() *cli.Command {
 		Usage: "Bundle an app into an msix package",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
-				Name:        "config",
-				Aliases:     []string{"x"},
-				Usage:       "The path to the config file",
-				DefaultText: "./msixpack.yaml",
+				Name:    "config",
+				Aliases: []string{"c"},
+				Usage:   "The path to the config file",
+				Value:   "msixpack.toml",
 			},
 		},
 		Action: bundleAction,
@@ -25,14 +29,42 @@ func Bundle() *cli.Command {
 	return cmd
 }
 
-func bundleAction(_ context.Context, _ *cli.Command) error {
-	fmt.Printf("Bundling app\n")
+func bundleAction(_ context.Context, command *cli.Command) error {
+	fmt.Println("Bundling app")
+	configPath := command.String("config")
+	cfg, err := bundle.ReadConfig(configPath)
+	if err != nil {
+		return err
+	}
+	p, err := filepath.Abs(configPath)
+	if err != nil {
+		return err
+	}
+	dir := filepath.Dir(p)
+	execPath := path.Join(dir, cfg.Application.Executable)
+	fmt.Printf("Config %s", execPath)
+	if err := os.MkdirAll("temp", 0750); err != nil {
+		return err
+	}
+
+	if err = bundle.CopyFile(execPath, "temp/hello.exe"); err != nil {
+		return err
+	}
+
 	m := bundle.NewManifest()
-	// FIXME
-	//err := bundle.LoadConfig(m)
-	//if err != nil {
-	//	return err
-	//}
-	fmt.Printf("%v\n", m)
+	m.ParseConfig(&cfg)
+
+	// TODO: move this to a function
+	output, err := xml.MarshalIndent(m, "", "\t")
+	if err != nil {
+		return err
+	}
+	err = os.WriteFile("temp/appxmanifest.xml", output, 0666)
+	if err != nil {
+		return err
+	}
+	if err = bundle.BundleApp("temp", "out.msix"); err != nil {
+		return err
+	}
 	return nil
 }

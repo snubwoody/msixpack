@@ -40,3 +40,28 @@ func downloadFile(url string, dest string) (string, error) {
 	}
 	return dest, nil
 }
+
+// CopyFile copies a file from src to dest, overwriting
+// the file if it exists.
+func CopyFile(src string, dest string) error {
+	srcFile, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	destFile, err := os.Create(dest)
+	if err != nil {
+		return err
+	}
+	if _, err := io.Copy(destFile, srcFile); err != nil {
+		return err
+	}
+
+	if err = srcFile.Close(); err != nil {
+		return err
+	}
+
+	if err = destFile.Close(); err != nil {
+		return err
+	}
+	return nil
+}

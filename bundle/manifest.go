@@ -6,16 +6,16 @@ import (
 
 // TODO: add visual elements
 type Manifest struct {
-	XMLName            xml.Name `xml:"Package"`
-	Namespace          string   `xml:"xmlns,attr"`
-	UapNamespace       string   `xml:"xmlns:uap,attr"`
-	ResCapNamespace    string   `xml:"xmlns:rescap,attr"`
-	IgnorableNamespace string   `xml:"IgnorableNamespace,attr"`
-	Properties         Properties
-	Identity           Identity
-	Dependencies       Dependencies
-	Applications       []Application `xml:"Applications>Application"`
-	Capabilities       []Capability  `xml:"Capabilities>rescap:Capability"`
+	XMLName             xml.Name `xml:"Package"`
+	Namespace           string   `xml:"xmlns,attr"`
+	UapNamespace        string   `xml:"xmlns:uap,attr"`
+	ResCapNamespace     string   `xml:"xmlns:rescap,attr"`
+	IgnorableNamespaces string   `xml:"IgnorableNamespaces,attr"`
+	Properties          Properties
+	Identity            Identity
+	Dependencies        Dependencies
+	Applications        []Application `xml:"Applications>Application"`
+	Capabilities        []Capability  `xml:"Capabilities>rescap:Capability"`
 }
 
 type Capability struct {
@@ -23,9 +23,18 @@ type Capability struct {
 }
 
 type Application struct {
-	Id         string `xml:"Id,attr"`
-	Executable string `xml:"Executable,attr"`
-	EntryPoint string `xml:"EntryPoint,attr"`
+	Id             string                    `xml:"Id,attr"`
+	Executable     string                    `xml:"Executable,attr"`
+	EntryPoint     string                    `xml:"EntryPoint,attr"`
+	VisualElements ApplicationVisualElements `xml:"uap:VisualElements"`
+}
+
+type ApplicationVisualElements struct {
+	DisplayName     string `xml:"DisplayName,attr"`
+	LargeLogo       string `xml:"Square150x150Logo,attr"`
+	SmallLogo       string `xml:"Square44x44Logo,attr"`
+	BackgroundColor string `xml:"BackgroundColor,attr"`
+	Description     string `xml:"Description,attr"`
 }
 
 type Properties struct {
@@ -55,10 +64,10 @@ type TargetDeviceFamily struct {
 func NewManifest() *Manifest {
 	// The namespace values should never change.
 	m := &Manifest{
-		Namespace:          "http://schemas.microsoft.com/appx/manifest/foundation/windows10",
-		UapNamespace:       "http://schemas.microsoft.com/appx/manifest/uap/windows10",
-		ResCapNamespace:    "http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities",
-		IgnorableNamespace: "uap rescap",
+		Namespace:           "http://schemas.microsoft.com/appx/manifest/foundation/windows10",
+		UapNamespace:        "http://schemas.microsoft.com/appx/manifest/uap/windows10",
+		ResCapNamespace:     "http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities",
+		IgnorableNamespaces: "uap rescap",
 		Dependencies: Dependencies{
 			TargetDeviceFamily: TargetDeviceFamily{
 				Name:             "Windows.Desktop",
@@ -97,11 +106,19 @@ func (m *Manifest) loadApplication(cfg *Config) {
 	if cfg.Application.Id == "" {
 		id = cfg.Application.Name
 	}
-	m.Applications = []Application{
-		{
-			Id:         id,
-			Executable: cfg.Application.Executable,
-			EntryPoint: "Windows.FullTrustApplication",
+	app := Application{
+		Id:         id,
+		Executable: cfg.Application.Executable,
+		EntryPoint: "Windows.FullTrustApplication",
+		VisualElements: ApplicationVisualElements{
+			SmallLogo:       cfg.Package.Logo,
+			LargeLogo:       cfg.Package.Logo,
+			DisplayName:     cfg.Application.Name,
+			Description:     cfg.Application.Description,
+			BackgroundColor: "transparent",
 		},
+	}
+	m.Applications = []Application{
+		app,
 	}
 }
