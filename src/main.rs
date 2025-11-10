@@ -1,5 +1,6 @@
 mod manifest;
 mod bundle;
+mod download;
 
 use crate::manifest::{AppxManifest, VisualElements};
 use anyhow::Context;
@@ -153,11 +154,24 @@ fn copy_resources(config: &Config, dest: impl AsRef<Path>) -> anyhow::Result<()>
     Ok(())
 }
 
+fn data_dir() -> PathBuf {
+    dirs::data_dir()
+        .unwrap()
+        .join("msixpack")
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
     use std::fs::File;
-    use tempfile::{tempdir, tempfile};
+    use tempfile::{tempdir};
+
+    #[test]
+    fn get_data_dir() {
+        let dir = data_dir();
+        let data_dir = dirs::data_dir().unwrap();
+        assert_eq!(dir,data_dir.join("msixpack"));
+    }
 
     #[test]
     fn create_identity() {
