@@ -1,9 +1,12 @@
+mod manifest;
+
 use std::fs;
 use std::fs::File;
 use std::path::{Path, PathBuf};
 use anyhow::Context;
 use glob::glob;
 use serde::{Deserialize, Serialize};
+use crate::manifest::AppxManifest;
 
 fn main() -> anyhow::Result<()> {
     // TODO:
@@ -19,8 +22,9 @@ fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
+
 #[derive(Debug,Clone,PartialEq,Serialize,Deserialize,Default)]
-struct Config{
+pub struct Config{
     /// The path of the configuration file.
     #[serde(skip,default)]
     directory: PathBuf,
@@ -28,10 +32,27 @@ struct Config{
     application: Application
 }
 
+impl Config {
+    pub fn create_manifest(&self) -> AppxManifest{
+        let mut manifest = AppxManifest::new();
+        manifest.identity.version = self.package.version.clone();
+        manifest.identity.name = self.package.name.clone();
+        manifest.identity.processor_architecture = "x64".to_owned();
+        manifest.identity.publisher = self.package.publisher.to_owned();
+        manifest
+    }
+}
+
 #[derive(Debug,Clone,PartialEq,Serialize,Deserialize,Default)]
 struct Package{
+    /// The name of the package.
+    name: String,
+    publisher_name: String,
+    publisher: String,
+    version: String,
+    logo: String,
     /// A series of glob paths.
-    resources: Vec<String>
+    resources: Vec<String>,
 }
 
 #[derive(Debug,Clone,PartialEq,Serialize,Deserialize,Default)]
@@ -40,14 +61,17 @@ struct Application{
 }
 
 fn create_package(config: &Config,dest: impl AsRef<Path>) -> anyhow::Result<()> {
-    // FIXME: create dest directory
+    copy_executable(config, &dest)?;
+    copy_resources(config, &dest)?;
+    Ok(())
+}
 
+fn copy_executable(config: &Config,dest: impl AsRef<Path>) -> anyhow::Result<()> {
     let dest = dest.as_ref();
     let exe_path = config.directory.join(&config.application.executable);
     let exe = config.application.executable.file_name().unwrap();
     // FIXME: put it in the root
     fs::copy(exe_path, dest.join(&exe))?;
-    copy_resources(config, &dest)?;
     Ok(())
 }
 
@@ -68,16 +92,30 @@ fn copy_resources(config: &Config,dest: impl AsRef<Path>) -> anyhow::Result<()> 
     Ok(())
 }
 
-/// Copy all glob matches into the destination directory.
-fn copy_glob(){
-
-}
-
 #[cfg(test)]
 mod test{
     use std::fs::File;
     use tempfile::{tempdir, tempfile};
     use super::*;
+
+    #[test]
+    fn create_identity(){
+        let package = Package{
+            name: String::from("Company.App"),
+            version: "1.0.0.0".to_string(),
+            logo: "img.png".to_string(),
+            publisher: "CN=Company".to_string(),
+            publisher_name: "Company".to_string(),
+            ..Default::default()
+        };
+        let config = Config{package,..Default::default()};
+        let manifest = config.create_manifest();
+
+        assert_eq!(manifest.identity.version, "1.0.0.0");
+        assert_eq!(manifest.identity.processor_architecture, "x64");
+        assert_eq!(manifest.identity.publisher, "CN=Company");
+        assert_eq!(manifest.identity.name, "Company.App");
+    }
 
     #[test]
     fn copy_resources() -> anyhow::Result<()> {
@@ -91,7 +129,8 @@ mod test{
         let config = Config{
             directory: dir.path().to_path_buf(),
             package: Package{
-                resources: vec!["icons/*.png".to_string()]
+                resources: vec!["icons/*.png".to_string()],
+                ..Default::default()
             },
             ..Default::default()
         };
