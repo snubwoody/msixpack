@@ -10,7 +10,6 @@ fn main() -> anyhow::Result<()> {
     // Copy executable and resources
     // Create appxmanifest
     // Create msix package
-    println!("Hello, world!");
     let config_path = Path::new("testdata/hello/msixpack.toml");
     let bytes = fs::read(config_path)?;
     let mut config: Config = toml::from_slice(&bytes)?;
@@ -25,7 +24,8 @@ struct Config{
     /// The path of the configuration file.
     #[serde(skip,default)]
     directory: PathBuf,
-    package: Package
+    package: Package,
+    application: Application
 }
 
 #[derive(Debug,Clone,PartialEq,Serialize,Deserialize,Default)]
@@ -34,8 +34,19 @@ struct Package{
     resources: Vec<String>
 }
 
+#[derive(Debug,Clone,PartialEq,Serialize,Deserialize,Default)]
+struct Application{
+    executable: PathBuf,
+}
+
 fn create_package(config: &Config,dest: impl AsRef<Path>) -> anyhow::Result<()> {
     // FIXME: create dest directory
+
+    let dest = dest.as_ref();
+    let exe_path = config.directory.join(&config.application.executable);
+    let exe = config.application.executable.file_name().unwrap();
+    // FIXME: put it in the root
+    fs::copy(exe_path, dest.join(&exe))?;
     copy_resources(config, &dest)?;
     Ok(())
 }
@@ -82,6 +93,7 @@ mod test{
             package: Package{
                 resources: vec!["icons/*.png".to_string()]
             },
+            ..Default::default()
         };
         let out = tempdir()?;
         super::copy_resources(&config,out.path())?;
