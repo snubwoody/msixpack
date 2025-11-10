@@ -1,12 +1,15 @@
 mod manifest;
 
-use std::fs;
-use std::fs::File;
-use std::path::{Path, PathBuf};
+use crate::manifest::{AppxManifest, VisualElements};
 use anyhow::Context;
 use glob::glob;
+use quick_xml::Writer;
+use quick_xml::se::Serializer;
 use serde::{Deserialize, Serialize};
-use crate::manifest::{AppxManifest, VisualElements};
+use std::fs;
+use std::fs::File;
+use std::io::Cursor;
+use std::path::{Path, PathBuf};
 
 fn main() -> anyhow::Result<()> {
     // TODO:
@@ -15,25 +18,24 @@ fn main() -> anyhow::Result<()> {
     // Create msix package
     let config_path = Path::new("testdata/hello/msixpack.toml");
     let bytes = fs::read(config_path)?;
-    let mut config: Config = toml::from_slice(&bytes)
-        .with_context(|| "Failed to parse config".to_string())?;
+    let mut config: Config =
+        toml::from_slice(&bytes).with_context(|| "Failed to parse config".to_string())?;
     config.directory = config_path.parent().unwrap().to_path_buf();
-    create_package(&config,"out-temp")?;
+    create_package(&config, "out-temp")?;
     Ok(())
 }
 
-
-#[derive(Debug,Clone,PartialEq,Serialize,Deserialize,Default)]
-pub struct Config{
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
+pub struct Config {
     /// The path of the configuration file.
-    #[serde(skip,default)]
+    #[serde(skip, default)]
     directory: PathBuf,
     package: Package,
-    application: Application
+    application: Application,
 }
 
 impl Config {
-    pub fn create_manifest(&self) -> AppxManifest{
+    pub fn create_manifest(&self) -> AppxManifest {
         let mut manifest = AppxManifest::new();
 
         manifest.identity.version = self.package.version.clone();
@@ -45,16 +47,19 @@ impl Config {
         manifest.properties.display_name = self.package.display_name.to_owned();
         manifest.properties.publisher_display_name = self.package.publisher_name.to_owned();
 
-        manifest.applications.applications.push(self.create_application());
+        manifest
+            .applications
+            .applications
+            .push(self.create_application());
         manifest
     }
 
-    fn create_application(&self) -> manifest::Application{
-        let app = manifest::Application{
+    fn create_application(&self) -> manifest::Application {
+        let app = manifest::Application {
             id: self.application.id.clone(),
             executable: self.application.executable.to_str().unwrap().to_owned(),
             entry_point: String::from("Windows.FullTrustApplication"),
-            visual_elements: VisualElements{
+            visual_elements: VisualElements {
                 display_name: self.application.display_name.to_owned(),
                 description: self.application.description.to_owned(),
                 background_color: String::from("transparent"),
@@ -69,9 +74,9 @@ impl Config {
     }
 }
 
-#[derive(Debug,Clone,PartialEq,Serialize,Deserialize,Default)]
-#[serde(rename_all="kebab-case")]
-struct Package{
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "kebab-case")]
+struct Package {
     /// The name of the package.
     name: String,
     display_name: String,
@@ -83,25 +88,30 @@ struct Package{
     resources: Vec<String>,
 }
 
-#[derive(Debug,Clone,PartialEq,Serialize,Deserialize,Default)]
-#[serde(rename_all="kebab-case")]
-struct Application{
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "kebab-case")]
+struct Application {
     id: String,
     display_name: String,
     description: String,
     executable: PathBuf,
 }
 
-fn create_package(config: &Config,dest: impl AsRef<Path>) -> anyhow::Result<()> {
+fn create_package(config: &Config, dest: impl AsRef<Path>) -> anyhow::Result<()> {
     copy_executable(config, &dest)?;
     copy_resources(config, &dest)?;
+
     let manifest = config.create_manifest();
     let xml = quick_xml::se::to_string(&manifest)?;
+    // let mut buffer = Vec::new();
+    // let mut writer = Writer::new_with_indent(Cursor::new(&mut buffer), b' ',4);
+    // let mut serializer = Serializer::new(&mut writer);
+    // manifest.serialize(&mut serializer)?;
     fs::write(dest.as_ref().join("appxmanifest.xml"), xml)?;
     Ok(())
 }
 
-fn copy_executable(config: &Config,dest: impl AsRef<Path>) -> anyhow::Result<()> {
+fn copy_executable(config: &Config, dest: impl AsRef<Path>) -> anyhow::Result<()> {
     let dest = dest.as_ref();
     let exe_path = config.directory.join(&config.application.executable);
     let exe = config.application.executable.file_name().unwrap();
@@ -111,11 +121,11 @@ fn copy_executable(config: &Config,dest: impl AsRef<Path>) -> anyhow::Result<()>
 }
 
 /// Copy all the resources defined in the [`Config`] to the destination directory.
-fn copy_resources(config: &Config,dest: impl AsRef<Path>) -> anyhow::Result<()> {
+fn copy_resources(config: &Config, dest: impl AsRef<Path>) -> anyhow::Result<()> {
     let dir = &config.directory;
-    for pattern in &config.package.resources{
+    for pattern in &config.package.resources {
         let path = dir.join(pattern);
-        for entry in glob(path.to_str().unwrap())?{
+        for entry in glob(path.to_str().unwrap())? {
             let entry = entry?;
             let base_path = entry.strip_prefix(&dir)?;
             let output = dest.as_ref().join(base_path);
@@ -128,14 +138,14 @@ fn copy_resources(config: &Config,dest: impl AsRef<Path>) -> anyhow::Result<()> 
 }
 
 #[cfg(test)]
-mod test{
+mod test {
+    use super::*;
     use std::fs::File;
     use tempfile::{tempdir, tempfile};
-    use super::*;
 
     #[test]
-    fn create_identity(){
-        let package = Package{
+    fn create_identity() {
+        let package = Package {
             name: String::from("Company.App"),
             version: "1.0.0.0".to_string(),
             logo: "img.png".to_string(),
@@ -143,7 +153,10 @@ mod test{
             publisher_name: "Company".to_string(),
             ..Default::default()
         };
-        let config = Config{package,..Default::default()};
+        let config = Config {
+            package,
+            ..Default::default()
+        };
         let manifest = config.create_manifest();
 
         assert_eq!(manifest.identity.version, "1.0.0.0");
@@ -153,19 +166,22 @@ mod test{
     }
 
     #[test]
-    fn create_application(){
-        let application = Application{
+    fn create_application() {
+        let application = Application {
             id: String::from("ID"),
             executable: PathBuf::from("/bin/sh"),
             ..Default::default()
         };
-        let config = Config{application,..Default::default()};
+        let config = Config {
+            application,
+            ..Default::default()
+        };
         let manifest = config.create_manifest();
 
         let app = &manifest.applications.applications[0];
         assert_eq!(app.id, "ID");
-        assert_eq!(app.executable,"/bin/sh");
-        assert_eq!(app.entry_point,"Windows.FullTrustApplication");
+        assert_eq!(app.executable, "/bin/sh");
+        assert_eq!(app.entry_point, "Windows.FullTrustApplication");
     }
 
     #[test]
@@ -177,16 +193,16 @@ mod test{
         let icon2 = dir.path().join("icons").join("icon2.png");
         File::create(&icon1)?;
         File::create(&icon2)?;
-        let config = Config{
+        let config = Config {
             directory: dir.path().to_path_buf(),
-            package: Package{
+            package: Package {
                 resources: vec!["icons/*.png".to_string()],
                 ..Default::default()
             },
             ..Default::default()
         };
         let out = tempdir()?;
-        super::copy_resources(&config,out.path())?;
+        super::copy_resources(&config, out.path())?;
         assert!(fs::exists(out.path().join("icons/icon1.png"))?);
         assert!(fs::exists(out.path().join("icons/icon2.png"))?);
         Ok(())

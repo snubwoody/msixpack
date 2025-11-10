@@ -1,9 +1,9 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Default)]
-#[serde(rename="Package")]
-#[serde(rename_all="PascalCase")]
-pub struct AppxManifest{
+#[serde(rename = "Package")]
+#[serde(rename_all = "PascalCase")]
+pub struct AppxManifest {
     #[serde(rename = "@xmlns")]
     pub xmlns: String,
     #[serde(rename = "@xmlns:uap")]
@@ -22,13 +22,15 @@ pub struct AppxManifest{
     pub applications: Applications,
 }
 
-impl AppxManifest{
+impl AppxManifest {
     /// Create a new appxmanifest.
-    pub fn new() -> AppxManifest{
-        Self{
+    pub fn new() -> AppxManifest {
+        Self {
             xmlns: String::from("http://schemas.microsoft.com/appx/manifest/foundation/windows10"),
             xmlns_uap: String::from("http://schemas.microsoft.com/appx/manifest/uap/windows10"),
-            xmlns_rescap: String::from("http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"),
+            xmlns_rescap: String::from(
+                "http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities",
+            ),
             ignorable_namespaces: String::from("uap rescap"),
             ..Default::default()
         }
@@ -36,7 +38,7 @@ impl AppxManifest{
 }
 
 #[derive(Serialize, Deserialize, Debug, Default)]
-pub struct Identity{
+pub struct Identity {
     #[serde(rename = "@Name")]
     pub name: String,
     #[serde(rename = "@Version")]
@@ -48,25 +50,25 @@ pub struct Identity{
 }
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
-pub struct Applications{
-    #[serde(rename="Application")]
+pub struct Applications {
+    #[serde(rename = "Application")]
     pub applications: Vec<Application>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Default,Clone)]
-pub struct Application{
-    #[serde(rename="@Id")]
+#[derive(Serialize, Deserialize, Debug, Default, Clone)]
+pub struct Application {
+    #[serde(rename = "@Id")]
     pub id: String,
-    #[serde(rename="@Executable")]
+    #[serde(rename = "@Executable")]
     pub executable: String,
-    #[serde(rename="@EntryPoint")]
+    #[serde(rename = "@EntryPoint")]
     pub entry_point: String,
-    #[serde(rename="uap:VisualElements")]
-    pub visual_elements: VisualElements
+    #[serde(rename = "uap:VisualElements")]
+    pub visual_elements: VisualElements,
 }
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
-pub struct VisualElements{
+pub struct VisualElements {
     #[serde(rename = "@DisplayName")]
     pub display_name: String,
     #[serde(rename = "@Description")]
@@ -76,38 +78,41 @@ pub struct VisualElements{
     #[serde(rename = "@Square150x150Logo")]
     pub square_150_logo: String,
     #[serde(rename = "@Square44x44Logo")]
-    pub square_44_logo: String
+    pub square_44_logo: String,
 }
 
+pub struct DefaultTitle {
+    wide_350x150_logo: String,
+}
 
 #[derive(Serialize, Deserialize, Debug, Default)]
-pub struct Resources{
+pub struct Resources {
     pub resources: Vec<Resource>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Default)]
-pub struct Resource{
+pub struct Resource {
     #[serde(rename = "@Name")]
     name: String,
 }
 
 // TODO: test casing, must be
 #[derive(Serialize, Deserialize, Debug, Default)]
-#[serde(rename_all="PascalCase")]
-pub struct Properties{
+#[serde(rename_all = "PascalCase")]
+pub struct Properties {
     pub display_name: String,
     pub publisher_display_name: String,
     pub logo: String,
 }
 
-#[derive(Serialize, Deserialize, Debug, Default,PartialEq,Clone,PartialOrd)]
-#[serde(rename_all="PascalCase")]
-pub struct Dependencies{
-    pub target_device_family: TargetDeviceFamily
+#[derive(Serialize, Deserialize, Debug, Default, PartialEq, Clone, PartialOrd)]
+#[serde(rename_all = "PascalCase")]
+pub struct Dependencies {
+    pub target_device_family: TargetDeviceFamily,
 }
 
-#[derive(Serialize, Deserialize, Debug,Clone,PartialOrd, PartialEq)]
-pub struct TargetDeviceFamily{
+#[derive(Serialize, Deserialize, Debug, Clone, PartialOrd, PartialEq)]
+pub struct TargetDeviceFamily {
     #[serde(rename = "@Name")]
     name: String,
     #[serde(rename = "@MinVersion")]
@@ -116,14 +121,14 @@ pub struct TargetDeviceFamily{
     max_version: String,
 }
 
-impl Default for TargetDeviceFamily{
+impl Default for TargetDeviceFamily {
     fn default() -> Self {
         // (i think) this is the minimum version supported by msix.
         let min_version = "10.0.17763.0";
         // just an arbitrary version that is recent enough.
         let max_version = "10.0.22621.0";
 
-        Self{
+        Self {
             name: String::from("Windows.Desktop"),
             min_version: String::from(min_version),
             max_version: String::from(max_version),
@@ -132,15 +137,24 @@ impl Default for TargetDeviceFamily{
 }
 
 #[cfg(test)]
-mod test{
+mod test {
     use super::*;
 
     #[test]
-    fn manifest_namespace(){
+    fn manifest_namespace() {
         let manifest = AppxManifest::new();
-        assert_eq!(manifest.xmlns,"http://schemas.microsoft.com/appx/manifest/foundation/windows10");
-        assert_eq!(manifest.xmlns_uap,"http://schemas.microsoft.com/appx/manifest/uap/windows10");
-        assert_eq!(manifest.xmlns_rescap,"http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities");
-        assert_eq!(manifest.ignorable_namespaces,"uap rescap");
+        assert_eq!(
+            manifest.xmlns,
+            "http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+        );
+        assert_eq!(
+            manifest.xmlns_uap,
+            "http://schemas.microsoft.com/appx/manifest/uap/windows10"
+        );
+        assert_eq!(
+            manifest.xmlns_rescap,
+            "http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+        );
+        assert_eq!(manifest.ignorable_namespaces, "uap rescap");
     }
 }
