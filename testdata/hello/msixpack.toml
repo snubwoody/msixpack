@@ -10,5 +10,5 @@ resources = ["icon.png"]
 [application]
 id = "Hello"
 executable = "hello.exe"
-name = "Folio"
 description = "A simple greeting"
+display-name = "Hello"

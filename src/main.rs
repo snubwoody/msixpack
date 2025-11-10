@@ -6,7 +6,7 @@ use std::path::{Path, PathBuf};
 use anyhow::Context;
 use glob::glob;
 use serde::{Deserialize, Serialize};
-use crate::manifest::AppxManifest;
+use crate::manifest::{AppxManifest, VisualElements};
 
 fn main() -> anyhow::Result<()> {
     // TODO:
@@ -15,9 +15,9 @@ fn main() -> anyhow::Result<()> {
     // Create msix package
     let config_path = Path::new("testdata/hello/msixpack.toml");
     let bytes = fs::read(config_path)?;
-    let mut config: Config = toml::from_slice(&bytes)?;
+    let mut config: Config = toml::from_slice(&bytes)
+        .with_context(|| "Failed to parse config".to_string())?;
     config.directory = config_path.parent().unwrap().to_path_buf();
-    dbg!(&config);
     create_package(&config,"out-temp")?;
     Ok(())
 }
@@ -54,6 +54,14 @@ impl Config {
             id: self.application.id.clone(),
             executable: self.application.executable.to_str().unwrap().to_owned(),
             entry_point: String::from("Windows.FullTrustApplication"),
+            visual_elements: VisualElements{
+                display_name: self.application.display_name.to_owned(),
+                description: self.application.description.to_owned(),
+                background_color: String::from("transparent"),
+                square_44_logo: self.package.logo.to_owned(),
+                square_150_logo: self.package.logo.to_owned(),
+                ..Default::default()
+            },
             ..Default::default()
         };
 
@@ -62,6 +70,7 @@ impl Config {
 }
 
 #[derive(Debug,Clone,PartialEq,Serialize,Deserialize,Default)]
+#[serde(rename_all="kebab-case")]
 struct Package{
     /// The name of the package.
     name: String,
@@ -75,14 +84,20 @@ struct Package{
 }
 
 #[derive(Debug,Clone,PartialEq,Serialize,Deserialize,Default)]
+#[serde(rename_all="kebab-case")]
 struct Application{
     id: String,
+    display_name: String,
+    description: String,
     executable: PathBuf,
 }
 
 fn create_package(config: &Config,dest: impl AsRef<Path>) -> anyhow::Result<()> {
     copy_executable(config, &dest)?;
     copy_resources(config, &dest)?;
+    let manifest = config.create_manifest();
+    let xml = quick_xml::se::to_string(&manifest)?;
+    fs::write(dest.as_ref().join("appxmanifest.xml"), xml)?;
     Ok(())
 }
 

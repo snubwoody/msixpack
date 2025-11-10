@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Default)]
 #[serde(rename="Package")]
+#[serde(rename_all="PascalCase")]
 pub struct AppxManifest{
     #[serde(rename = "@xmlns")]
     pub xmlns: String,
@@ -48,6 +49,7 @@ pub struct Identity{
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct Applications{
+    #[serde(rename="Application")]
     pub applications: Vec<Application>,
 }
 
@@ -59,11 +61,11 @@ pub struct Application{
     pub executable: String,
     #[serde(rename="@EntryPoint")]
     pub entry_point: String,
+    #[serde(rename="uap:VisualElements")]
     pub visual_elements: VisualElements
 }
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
-#[serde(rename="uap:VisualElements")]
 pub struct VisualElements{
     #[serde(rename = "@DisplayName")]
     pub display_name: String,
@@ -89,7 +91,9 @@ pub struct Resource{
     name: String,
 }
 
+// TODO: test casing, must be
 #[derive(Serialize, Deserialize, Debug, Default)]
+#[serde(rename_all="PascalCase")]
 pub struct Properties{
     pub display_name: String,
     pub publisher_display_name: String,
@@ -97,6 +101,7 @@ pub struct Properties{
 }
 
 #[derive(Serialize, Deserialize, Debug, Default,PartialEq,Clone,PartialOrd)]
+#[serde(rename_all="PascalCase")]
 pub struct Dependencies{
     pub target_device_family: TargetDeviceFamily
 }
