@@ -49,7 +49,9 @@ func CopyFile(src string, dest string) error {
 		return err
 	}
 	destFile, err := os.Create(dest)
-
+	if err != nil {
+		return err
+	}
 	if _, err := io.Copy(destFile, srcFile); err != nil {
 		return err
 	}
