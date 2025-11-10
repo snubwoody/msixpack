@@ -1,27 +1,37 @@
 mod manifest;
+mod bundle;
 
 use crate::manifest::{AppxManifest, VisualElements};
 use anyhow::Context;
 use glob::glob;
-use quick_xml::Writer;
-use quick_xml::se::Serializer;
 use serde::{Deserialize, Serialize};
 use std::fs;
-use std::fs::File;
-use std::io::Cursor;
 use std::path::{Path, PathBuf};
+use tempfile::tempdir;
+use crate::bundle::bundle_package;
 
 fn main() -> anyhow::Result<()> {
     // TODO:
     // Copy executable and resources
     // Create appxmanifest
     // Create msix package
-    let config_path = Path::new("testdata/hello/msixpack.toml");
-    let bytes = fs::read(config_path)?;
+    let config_path = Path::new("msix/msixpack.toml");
+    let bytes = fs::read(config_path)
+        .with_context(|| format!("Failed to read configuration file from {config_path:?}"))?;
     let mut config: Config =
         toml::from_slice(&bytes).with_context(|| "Failed to parse config".to_string())?;
     config.directory = config_path.parent().unwrap().to_path_buf();
-    create_package(&config, "out-temp")?;
+    let temp = tempdir()
+        .with_context(|| "Failed to create temporary directory")?;
+    let temp_dir = temp.path();
+    let dest = temp_dir.join(".msixpack");
+    fs::create_dir_all(&dest)
+        .with_context(|| "Failed to create temporary directory")?;
+    create_package(&config, &dest)
+        .with_context(|| "Failed to create package")?;
+    bundle_package(dest,"folio_x64.msix")
+        .with_context(|| "Failed to bundle package")?;
+
     Ok(())
 }
 
@@ -97,19 +107,19 @@ struct Application {
     executable: PathBuf,
 }
 
+/// Creates an msix package in the `dest` directory
 fn create_package(config: &Config, dest: impl AsRef<Path>) -> anyhow::Result<()> {
-    copy_executable(config, &dest)?;
-    copy_resources(config, &dest)?;
-
+    copy_executable(config, &dest)
+        .with_context(|| "Failed to copy executable to destination directory")?;
+    copy_resources(config, &dest)
+        .with_context(|| "Failed to copy resources to destination directory")?;
     let manifest = config.create_manifest();
     let xml = quick_xml::se::to_string(&manifest)?;
-    // let mut buffer = Vec::new();
-    // let mut writer = Writer::new_with_indent(Cursor::new(&mut buffer), b' ',4);
-    // let mut serializer = Serializer::new(&mut writer);
-    // manifest.serialize(&mut serializer)?;
-    fs::write(dest.as_ref().join("appxmanifest.xml"), xml)?;
+    fs::write(&dest.as_ref().join("appxmanifest.xml"), &xml)?;
     Ok(())
 }
+
+
 
 fn copy_executable(config: &Config, dest: impl AsRef<Path>) -> anyhow::Result<()> {
     let dest = dest.as_ref();
@@ -128,10 +138,16 @@ fn copy_resources(config: &Config, dest: impl AsRef<Path>) -> anyhow::Result<()>
         for entry in glob(path.to_str().unwrap())? {
             let entry = entry?;
             let base_path = entry.strip_prefix(&dir)?;
+
+            if entry.is_dir() {
+                continue;
+            }
             let output = dest.as_ref().join(base_path);
-            // FIXME: this will panic for base patterns
-            fs::create_dir_all(&output.parent().unwrap())?;
-            fs::copy(entry, output)?;
+
+            fs::create_dir_all(&output.parent().unwrap())
+                .with_context(|| "Failed to create directory")?;
+            fs::copy(&entry, &output)
+                .with_context(|| format!("Failed to copy file {:?} to {:?}",entry.to_str().unwrap(),output.to_str().unwrap()))?;
         }
     }
     Ok(())
