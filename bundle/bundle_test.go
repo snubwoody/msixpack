@@ -29,3 +29,20 @@ func TestPackMsix(t *testing.T) {
 	err = os.RemoveAll(tmp)
 	require.NoError(t, err)
 }
+
+func TestCreatePackage(t *testing.T) {
+	t.Run("copy executable", func(t *testing.T) {
+		tmp, err := os.CreateTemp("", "")
+		require.NoError(t, err)
+		fmt.Printf("%s", tmp.Name())
+		cfg := Config{
+			Application: ConfigApplication{
+				Executable: "",
+			},
+		}
+		err = CreatePackage(cfg)
+		require.NoError(t, err)
+		//err = os.Remove(tmp.Name())
+		//require.NoError(t, err)
+	})
+}

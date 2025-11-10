@@ -17,7 +17,8 @@ type ConfigPackage struct {
 	Publisher     string
 	PublisherName string `toml:"publisher-name"`
 	Logo          string
-	Resources     string
+	// Resources to include in the msix bundle.
+	Resources string
 }
 
 type ConfigApplication struct {
