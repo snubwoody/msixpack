@@ -1,5 +1,6 @@
 mod manifest;
 mod bundle;
+mod download;
 
 use crate::manifest::{AppxManifest, VisualElements};
 use anyhow::Context;
@@ -9,6 +10,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use tempfile::tempdir;
 use crate::bundle::bundle_package;
+use crate::download::download_windows_sdk;
 
 fn main() -> anyhow::Result<()> {
     // TODO:
@@ -25,6 +27,12 @@ fn main() -> anyhow::Result<()> {
         .with_context(|| "Failed to create temporary directory")?;
     let temp_dir = temp.path();
     let dest = temp_dir.join(".msixpack");
+
+    if !toolkit_exists()?{
+        let data_dir = data_dir();
+        download_windows_sdk(&data_dir)?;
+    }
+
     fs::create_dir_all(&dest)
         .with_context(|| "Failed to create temporary directory")?;
     create_package(&config, &dest)
@@ -33,6 +41,14 @@ fn main() -> anyhow::Result<()> {
         .with_context(|| "Failed to bundle package")?;
 
     Ok(())
+}
+
+/// Returns true if the windows toolkit is installed.
+fn toolkit_exists() -> anyhow::Result<bool> {
+    let data_dir = data_dir();
+    let exe_path = data_dir.join("windows-toolkit/makeappx.exe");
+
+    Ok(exe_path.exists())
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
@@ -109,6 +125,7 @@ struct Application {
 
 /// Creates an msix package in the `dest` directory
 fn create_package(config: &Config, dest: impl AsRef<Path>) -> anyhow::Result<()> {
+
     copy_executable(config, &dest)
         .with_context(|| "Failed to copy executable to destination directory")?;
     copy_resources(config, &dest)
@@ -153,11 +170,24 @@ fn copy_resources(config: &Config, dest: impl AsRef<Path>) -> anyhow::Result<()>
     Ok(())
 }
 
+fn data_dir() -> PathBuf {
+    dirs::data_dir()
+        .unwrap()
+        .join("msixpack")
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
     use std::fs::File;
-    use tempfile::{tempdir, tempfile};
+    use tempfile::{tempdir};
+
+    #[test]
+    fn get_data_dir() {
+        let dir = data_dir();
+        let data_dir = dirs::data_dir().unwrap();
+        assert_eq!(dir,data_dir.join("msixpack"));
+    }
 
     #[test]
     fn create_identity() {
