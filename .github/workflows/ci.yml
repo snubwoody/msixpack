@@ -12,31 +12,30 @@ concurrency:
 permissions:
   pull-requests: read
 jobs:
-  build:
+  format:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - name: Setup go
-        uses: actions/setup-go@v5
-      - name: Build
-        run: go build .
+      - name: Check formatting
+        run: cargo fmt --all --check
   lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - name: Setup go
-        uses: actions/setup-go@v5
+      - uses: Swatinem/rust-cache@v2
       - name: Lint
-        uses: golangci/golangci-lint-action@v8
-        with:
-          version: v2.1
+        run: cargo clippy -- -D warnings
   test:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v5
-      - name: Setup go
-        uses: actions/setup-go@v5
-      - name: Install gotestsum
-        run: go install gotest.tools/gotestsum@latest
+      - uses: Swatinem/rust-cache@v2
+      - uses: taiki-e/install-action@nextest
       - name: Run tests
-        run: gotestsum --format testname ./...
+        run: cargo nextest run --locked
+
+  pass:
+    needs: [test,lint,format]
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo All done
