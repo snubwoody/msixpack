@@ -2,14 +2,17 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use anyhow::{bail, Context};
+use crate::data_dir;
 
 /// Calls the `makeappx.exe` tool to create an msix package.
 pub fn bundle_package(dir: impl AsRef<Path>,dest: impl AsRef<Path>) -> anyhow::Result<()> {
+    let data_dir = data_dir();
+    let exe_path = data_dir.join("windows-toolkit/makeappx.exe");
     // TODO: set env var
     let package = dir.as_ref().to_str().unwrap();
     let output = dest.as_ref().to_str().unwrap();
     // TODO: test existing packages
-    let output = Command::new("./.msixpack/windows-toolkit/makeappx.exe")
+    let output = Command::new(&exe_path)
         .args(&["pack","/d",package,"/p",output,"/o"])
         .output()?;
 
